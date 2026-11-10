@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasks - Notes App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* Top Header */
+    header {
+      background: #ffffff;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+      z-index: 10;
+    }
+    
+    .brand { 
+      font-size: 1.5rem; 
+      font-weight: 800; 
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-tasks { color: #ff6600; }
+    .brand-icon { font-size: 1.3rem; }
+
+    /* Donate Button */
+    .donate-btn {
+      background-color: #22c55e;
+      color: white;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      text-decoration: none;
+      box-shadow: 0 2px 5px rgba(34, 197, 94, 0.2);
+    }
+
+    /* Main Layout */
+    .app-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar (Notes List) */
+    .sidebar {
+      width: 320px;
+      background: #ffffff;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+    }
+
+    .new-note-btn {
+      background: #ff6600;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 3px 8px rgba(255, 102, 0, 0.25);
+      transition: background 0.2s;
+    }
+    .new-note-btn:hover { background: #e05500; }
+
+    .search-input {
+      padding: 12px 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      outline: none;
+      font-size: 0.95rem;
+      background: #f8fafc;
+    }
+    .search-input:focus { border-color: #ff6600; background: #fff; }
+
+    .notes-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .note-item {
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 6px solid #cbd5e1;
+      transition: background 0.2s;
+    }
+    .note-item:hover { background: #e2e8f0; }
+    .note-item.active { background: #fff3eb; }
+    .note-item-title { font-size: 1rem; font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 180px; }
+    .delete-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1.2rem; padding: 6px; }
+
+    /* Editor Area */
+    .editor {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: #ffffff;
+      overflow-y: auto;
+    }
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .note-title-input {
+      flex: 1;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border: none;
+      outline: none;
+      background: transparent;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+    }
+    .note-title-input:focus { border-bottom-color: #ff6600; }
+
+    /* Color Tag Picker */
+    .color-picker { display: flex; gap: 10px; }
+    .color-dot {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: transform 0.1s;
+    }
+    .color-dot:hover { transform: scale(1.15); }
+    .color-dot.selected { border-color: #0f172a; transform: scale(1.1); }
+
+    .note-body-input {
+      flex: 1;
+      font-size: 1.1rem;
+      border: none;
+      outline: none;
+      background: transparent;
+      resize: none;
+      line-height: 1.7;
+      min-height: 200px;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-card {
+      background: #ffffff;
+      padding: 28px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .modal-card h3 { color: #ff6600; margin-bottom: 12px; font-size: 1.3rem; }
+    .modal-card p { font-size: 0.95rem; color: #475569; margin-bottom: 20px; line-height: 1.6; }
+    .modal-card button.close-modal {
+      background: #e2e8f0; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; color: #334155;
+    }
+
+    /* --- MOBILE STYLING (عرض متزامن على الهواتف) --- */
+    @media (max-width: 768px) {
+      .app-container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: 40%;
+        border-right: none;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 12px;
+      }
+      .editor {
+        flex: 1;
+        padding: 16px;
+      }
+      .note-title-input { font-size: 1.2rem; }
+      .new-note-btn { padding: 12px; font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <span class="brand-icon">⚡</span>
+      <span class="brand-tasks">Tasks</span>
+    </div>
+    <button class="donate-btn" onclick="openDonateModal()">☕ Support</button>
+  </header>
+
+  <!-- App Layout -->
+  <div class="app-container">
+    <!-- Sidebar / Notes List -->
+    <div class="sidebar">
+      <button class="new-note-btn" onclick="createNewNote()">+ New Note</button>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search notes..." oninput="renderNotesList()">
+      <div class="notes-list" id="notesList"></div>
+    </div>
+
+    <!-- Editor Workspace -->
+    <div class="editor">
+      <div class="editor-header">
+        <input type="text" id="noteTitle" class="note-title-input" placeholder="Note title..." oninput="saveCurrentNote()">
+        <div class="color-picker">
+          <div class="color-dot" style="background: #3b82f6;" onclick="setNoteColor('#3b82f6')"></div>
+          <div class="color-dot" style="background: #22c55e;" onclick="setNoteColor('#22c55e')"></div>
+          <div class="color-dot" style="background: #ff6600;" onclick="setNoteColor('#ff6600')"></div>
+          <div class="color-dot" style="background: #a855f7;" onclick="setNoteColor('#a855f7')"></div>
+        </div>
+      </div>
+      <textarea id="noteBody" class="note-body-input" placeholder="Type your notes freely here..." oninput="saveCurrentNote()"></textarea>
+    </div>
+  </div>
+
+  <!-- Donation Modal -->
+  <div class="modal-overlay" id="donateModal">
+    <div class="modal-card">
+      <h3>Thank you for supporting! ❤️</h3>
+      <p>Tasks is free and stores your data securely on your device. If you'd like to support my development, feel free to donate.</p>
+      <a href="https://paypal.me" target="_blank" class="donate-btn" style="justify-content: center; margin-bottom: 12px; width: 100%; padding: 12px;">Donate via PayPal</a>
+      <button class="close-modal" onclick="closeDonateModal()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    let notes = [];
+    let activeNoteId = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedNotes = localStorage.getItem('zozen_tasks_notes');
+      if (savedNotes) { notes = JSON.parse(savedNotes); }
+      
+      if (notes.length === 0) {
+        createNewNote();
+      } else {
+        selectNote(notes[0].id);
+      }
+      renderNotesList();
+    });
+
+    function createNewNote() {
+      const newNote = {
+        id: Date.now().toString(),
+        title: "Untitled Note",
+        body: "",
+        color: "#ff6600",
+        updatedAt: new Date().toISOString()
+      };
+      notes.unshift(newNote);
+      saveToLocalStorage();
+      selectNote(newNote.id);
+      renderNotesList();
+    }
+
+    function selectNote(id) {
+      activeNoteId = id;
+      const note = notes.find(n => n.id === id);
+      if (note) {
+        document.getElementById('noteTitle').value = note.title;
+        document.getElementById('noteBody').value = note.body;
+        updateColorPickerUI(note.color || '#ff6600');
+      }
+      renderNotesList();
+    }
+
+    function saveCurrentNote() {
+      if (!activeNoteId) return;
+      const note = notes.find(n => n.id === activeNoteId);
+      if (note) {
+        note.title = document.getElementById('noteTitle').value || "Untitled Note";
+        note.body = document.getElementById('noteBody').value;
+        note.updatedAt = new Date().toISOString();
+        saveToLocalStorage();
+        renderNotesList();
+      }
+    }
+
+    function setNoteColor(colorHex) {
+      if (!activeNoteId) return;
+      const note = notes.find(n => n.id === activeNoteId);
+      if (note) {
+        note.color = colorHex;
+        saveToLocalStorage();
+        updateColorPickerUI(colorHex);
+        renderNotesList();
+      }
+    }
+
+    function updateColorPickerUI(selectedColor) {
+      document.querySelectorAll('.color-dot').forEach(dot => {
+        dot.classList.toggle('selected', dot.style.backgroundColor === selectedColor);
+      });
+    }
+
+    function deleteNote(id, event) {
+      event.stopPropagation();
+      notes = notes.filter(n => n.id !== id);
+      saveToLocalStorage();
+      
+      if (notes.length === 0) {
+        createNewNote();
+      } else if (activeNoteId === id) {
+        selectNote(notes[0].id);
+      } else {
+        renderNotesList();
+      }
+    }
+
+    function saveToLocalStorage() {
+      localStorage.setItem('zozen_tasks_notes', JSON.stringify(notes));
+    }
+
+    function renderNotesList() {
+      const listEl = document.getElementById('notesList');
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      listEl.innerHTML = '';
+
+      const filteredNotes = notes.filter(note => 
+        note.title.toLowerCase().includes(searchQuery) || 
+        note.body.toLowerCase().includes(searchQuery)
+      );
+
+      filteredNotes.forEach(note => {
+        const item = document.createElement('div');
+        item.className = `note-item ${note.id === activeNoteId ? 'active' : ''}`;
+        item.style.borderLeftColor = note.color || '#ff6600';
+        item.onclick = () => selectNote(note.id);
+
+        item.innerHTML = `
+          <span class="note-item-title">${note.title || 'Untitled'}</span>
+          <button class="delete-btn" onclick="deleteNote('${note.id}', event)" title="Delete">🗑️</button>
+        `;
+        listEl.appendChild(item);
+      });
+    }
+
+    function openDonateModal() { document.getElementById('donateModal').style.display = 'flex'; }
+    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
+  </script>
+</body>
+</html>
